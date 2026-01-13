@@ -1,15 +1,13 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import pymysql
-from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'sysu_netsec_2025_final'
 
-# === 数据库配置 ===
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': '0d000721',  # <--- 请修改为你的真实密码
+    'password': '0d000721',
     'database': 'GameKeyHub',
     'cursorclass': pymysql.cursors.DictCursor
 }
@@ -19,7 +17,8 @@ def get_db():
     return pymysql.connect(**DB_CONFIG)
 
 
-# === 1. 认证模块 ===
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
@@ -34,12 +33,10 @@ def login():
     cursor = conn.cursor()
     try:
         if action == 'register':
-            # 注册初始余额为 0
-            hashed_pw = generate_password_hash(password)
             try:
                 cursor.execute(
                     "INSERT INTO Users (username, password_hash, role, balance) VALUES (%s, %s, 'user', 0.00)",
-                    (username, hashed_pw))
+                    (username, password))
                 conn.commit()
                 return jsonify({'status': 'success', 'msg': '注册成功！请登录后充值'})
             except pymysql.err.IntegrityError:
@@ -48,7 +45,8 @@ def login():
         elif action == 'login':
             cursor.execute("SELECT * FROM Users WHERE username=%s", (username,))
             user = cursor.fetchone()
-            if user and check_password_hash(user['password_hash'], password):
+
+            if user and user['password_hash'] == password:
                 session['user_id'] = user['user_id']
                 session['username'] = user['username']
                 session['role'] = user['role']
@@ -58,14 +56,12 @@ def login():
     finally:
         conn.close()
 
-
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
 
 
-# === 2. 商城主页 ===
 @app.route('/')
 def index():
     if 'user_id' not in session: return redirect('/login')
@@ -73,7 +69,6 @@ def index():
     conn = get_db()
     cursor = conn.cursor()
 
-    # 只显示未下架的游戏
     sql = """
           SELECT g.game_id, \
                  g.title, \
@@ -89,7 +84,6 @@ def index():
     cursor.execute(sql)
     games = cursor.fetchall()
 
-    # 价格建议算法
     for game in games:
         curr = game['current_price']
         low = game['historical_low']
@@ -114,7 +108,6 @@ def index():
     return render_template('index.html', games=games, user=user)
 
 
-# === 3. 充值接口 ===
 @app.route('/recharge', methods=['POST'])
 def recharge():
     if 'user_id' not in session: return jsonify({'status': 'error', 'msg': '请先登录'})
@@ -135,7 +128,6 @@ def recharge():
         conn.close()
 
 
-# === 4. 购买接口 (核心事务：买家扣款+卖家入账) ===
 @app.route('/buy', methods=['POST'])
 def buy_key():
     if 'user_id' not in session: return jsonify({'status': 'error', 'msg': '请先登录'})
@@ -146,7 +138,6 @@ def buy_key():
     cursor = conn.cursor()
     try:
         conn.begin()
-        # A. 锁定库存行，获取卖家ID
         sql_find = "SELECT key_id, price, seller_id FROM Product_Keys WHERE game_id=%s AND status='available' LIMIT 1 FOR UPDATE"
         cursor.execute(sql_find, (game_id,))
         item = cursor.fetchone()
@@ -163,20 +154,16 @@ def buy_key():
             conn.rollback();
             return jsonify({'status': 'error', 'msg': '不能购买自己的商品'})
 
-        # B. 检查买家余额
         cursor.execute("SELECT balance FROM Users WHERE user_id=%s", (buyer_id,))
         if cursor.fetchone()['balance'] < price:
             conn.rollback();
             return jsonify({'status': 'error', 'msg': '余额不足，请充值'})
 
-        # C. 执行转账 (原子性)
         cursor.execute("UPDATE Users SET balance = balance - %s WHERE user_id=%s", (price, buyer_id))  # 扣买家
         cursor.execute("UPDATE Users SET balance = balance + %s WHERE user_id=%s", (price, seller_id))  # 加卖家
 
-        # D. 移交商品
         cursor.execute("UPDATE Product_Keys SET status='sold', buyer_id=%s WHERE key_id=%s", (buyer_id, key_id))
 
-        # E. 记录订单
         cursor.execute("INSERT INTO Orders (buyer_id, key_id, deal_price) VALUES (%s, %s, %s)",
                        (buyer_id, key_id, price))
 
@@ -188,8 +175,6 @@ def buy_key():
     finally:
         conn.close()
 
-
-# === 5. 上架接口 ===
 @app.route('/sell', methods=['GET', 'POST'])
 def sell_key():
     if 'user_id' not in session: return redirect('/login')
@@ -198,7 +183,6 @@ def sell_key():
 
     if request.method == 'POST':
         game_id = request.form.get('game_id')
-        # 检查游戏是否允许上架
         cursor.execute("SELECT is_active FROM Games WHERE game_id=%s", (game_id,))
         game = cursor.fetchone()
         if not game or game['is_active'] == 0:
@@ -222,7 +206,6 @@ def sell_key():
         return render_template('sell.html', games=games)
 
 
-# === 6. 订单查询 ===
 @app.route('/my_orders')
 def my_orders():
     if 'user_id' not in session: return redirect('/login')
@@ -242,7 +225,6 @@ def my_orders():
     return render_template('my_orders.html', orders=orders)
 
 
-# === 7. 管理员后台 ===
 @app.route('/admin')
 def admin_dashboard():
     if session.get('role') != 'admin': return "Access Denied", 403
