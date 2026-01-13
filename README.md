@@ -2,6 +2,9 @@
 模拟游戏cdkey交易平台，实现cdkey的购买、出售，同时能够查询史低价格并且给出购买建议(●'◡'●)
 （当然里面的cdkey都是假的）
 
+![【哲风壁纸】卡通-海绵宝宝-清新](https://github.com/user-attachments/assets/76b5d6bd-f8b1-4e9a-856b-c0ff39d54011)
+
+
 ## 实现的功能
 
 买家：
@@ -13,6 +16,18 @@
 卖家：
 1.发布闲置 CDKey，设定售价。
 2.系统需自动根据新发布的价格更新游戏的“历史最低价”。
+
+<img width="1965" height="1167" alt="image" src="https://github.com/user-attachments/assets/5291e9ee-0709-46d2-a0ba-17d49be4cece" />
+
+<img width="1965" height="388" alt="image" src="https://github.com/user-attachments/assets/78eaf6d7-9381-47cb-b6cc-12b4b3512726" />
+
+<img width="1745" height="503" alt="image" src="https://github.com/user-attachments/assets/1e5c276e-7e99-4983-8494-d34bfbdbfeda" />
+
+<img width="1116" height="693" alt="image" src="https://github.com/user-attachments/assets/8378bed6-d2c1-4037-a97b-c6dc2984593b" />
+
+<img width="1945" height="713" alt="image" src="https://github.com/user-attachments/assets/75207554-1e79-4ec8-b661-3ce4620d305b" />
+
+
 
 ## 数据流分析
 用户发起购买请求 -> 后端开启数据库事务 -> 检查商品库存状态 -> 检查用户余额 -> 执行扣款与库存扣减 -> 提交事务 -> 生成订单记录
@@ -36,6 +51,10 @@
 
 # 使用教程
 下载整个仓库的文件，先用navicat运行一下`db_init.sql`文件，然后用`pycharm`运行app.py文件，点击终端里输出的网址就行了（没钱租服务器捏ㄒoㄒ）
+
+<img width="566" height="82" alt="image" src="https://github.com/user-attachments/assets/4661329b-5f3a-48e9-8bda-384ed3468a96" />
+
+
 管理员账户：admin
 密码：123456
 直接登录即可
