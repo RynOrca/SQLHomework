@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* 全局基础样式：和全站保持统一 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 页面背景：复用全站深色渐变 */
+        body { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); 
+            min-height: 100vh; 
+            color: #f0f0f0;
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+
+        /* 导航栏优化：强化毛玻璃+阴影 */
+        .navbar { 
+            background: rgba(10,18,38,0.85) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 0 !important;
+        }
+
+        .navbar-brand {
+            color: #ffffff !important;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            font-size: 18px;
+        }
+
+        .btn-outline-light {
+            border-color: rgba(255,255,255,0.2) !important;
+            color: #ffffff !important;
+            border-radius: 8px;
+            padding: 6px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.1) !important;
+            border-color: rgba(255,255,255,0.3) !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* 卡片核心样式：强化毛玻璃+多层阴影，和全站卡片风格一致 */
+        .card { 
+            background: rgba(255,255,255,0.08); 
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.12); 
+            border-radius: 16px;
+            box-shadow: 
+                0 8px 16px rgba(0,0,0,0.15),
+                0 2px 4px rgba(0,0,0,0.1),
+                inset 0 1px 0 rgba(255,255,255,0.05);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 
+                0 12px 20px rgba(0,0,0,0.2),
+                0 4px 8px rgba(0,0,0,0.15);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .card.p-3 {
+            padding: 24px !important;
+        }
+
+        /* 卡片标题样式 */
+        .card h5 {
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 20px !important;
+            letter-spacing: 0.5px;
+            font-size: 17px;
+        }
+
+        /* 表单元素优化 */
+        .form-control-sm, .form-select { 
+            background: rgba(255,255,255,0.08); 
+            border: 1px solid rgba(255,255,255,0.12); 
+            color: #ffffff;
+            border-radius: 8px;
+            padding: 10px 12px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control-sm:focus { 
+            background: rgba(255,255,255,0.12); 
+            color: #ffffff; 
+            border-color: #4cc9f0; 
+            box-shadow: 0 0 0 4px rgba(76, 201, 240, 0.15);
+            outline: none;
+        }
+
+        .form-control-sm::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* 按钮样式优化：和全站按钮风格统一 */
+        .btn-success {
+            background: rgba(52, 211, 153, 0.9);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 10px 0;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            background: rgba(52, 211, 153, 1);
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .btn-outline-warning {
+            border-color: rgba(251, 191, 36, 0.5) !important;
+            color: #fbbf24 !important;
+            border-radius: 8px;
+            padding: 4px 12px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-warning:hover {
+            background: rgba(251, 191, 36, 0.1) !important;
+            border-color: #fbbf24 !important;
+            color: #ffffff !important;
+        }
+
+        /* 表格样式优化：和订单页表格风格统一 */
+        .table { 
+            color: #e0e0e0 !important; 
+            font-size: 0.95rem !important;
+            background: transparent;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table thead {
+            background: rgba(18, 28, 43, 0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .table thead th {
+            color: #ffffff;
+            border: none;
+            padding: 12px 8px;
+            font-weight: 500;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .table tbody td {
+            color: #e0e0e0;
+            border-color: rgba(255,255,255,0.05);
+            padding: 12px 8px;
+            text-align: center;
+            transition: background 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* 流水表格特殊文字颜色优化 */
+        .text-info {
+            color: #4cc9f0 !important;
+            font-weight: 500;
+        }
+
+        .text-warning {
+            color: #fbbf24 !important;
+            font-weight: 500;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .container-fluid.px-4 {
+                padding: 0 15px !important;
+            }
+            .card.p-3 {
+                padding: 18px !important;
+            }
+            .table {
+                font-size: 0.85rem !important;
+            }
+            .table thead th, .table tbody td {
+                padding: 10px 4px;
+            }
+            .row.g-4 > div {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark mb-4 p-3">
+    <div class="container-fluid">
+        <span class="navbar-brand">🛡️ Admin 后台管理</span>
+        <a href="/" class="btn btn-outline-light btn-sm">返回前台</a>
+    </div>
+</nav>
+<div class="container-fluid px-4">
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card p-3 mb-3">
+                <h5>添加游戏</h5>
+                <form id="addG" class="row g-2">
+                    <div class="col-8">
+                        <input name="title" class="form-control form-control-sm" placeholder="请输入游戏名称" required>
+                    </div>
+                    <div class="col-4">
+                        <button type="button" onclick="add()" class="btn btn-success btn-sm w-100">添加</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card p-3">
+                <h5>游戏管理</h5>
+                <table class="table table-sm">
+                    <thead>
+                        <tr><th>ID</th><th>名称</th><th>状态</th><th>操作</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for g in games %}
+                        <tr>
+                            <td>{{g.game_id}}</td>
+                            <td>{{g.title}}</td>
+                            <td>{{'🟢 启用' if g.is_active else '🔴 禁用'}}</td>
+                            <td><button onclick="tog({{g.game_id}})" class="btn btn-sm btn-outline-warning">切换状态</button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-3 h-100">
+                <h5>全站流水</h5>
+                <table class="table table-sm">
+                    <thead>
+                        <tr><th>时间</th><th>游戏</th><th>买家</th><th>卖家</th><th>金额 (¥)</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for o in orders %}
+                        <tr>
+                            <td>{{o.deal_time}}</td>
+                            <td>{{o.title}}</td>
+                            <td class="text-info">{{o.buyer}}</td>
+                            <td class="text-warning">{{o.seller}}</td>
+                            <td>¥ {{o.deal_price}}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">暂无交易流水</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+// 添加游戏：新增前端校验，优化交互反馈
+function add() {
+    const form = document.getElementById('addG');
+    const titleInput = form.querySelector('input[name="title"]');
+    const title = titleInput.value.trim();
+    
+    // 前端空值校验
+    if (!title) {
+        alert('游戏名称不能为空！');
+        titleInput.focus();
+        return;
+    }
+
+    fetch('/admin/add_game', {
+        method:'POST', 
+        body: new FormData(form)
+    })
+    .then(r => {
+        if (r.ok) {
+            alert('游戏添加成功！');
+            location.reload();
+        } else {
+            alert('添加失败，请重试！');
+        }
+    })
+    .catch(err => {
+        console.error('添加游戏失败：', err);
+        alert('网络异常，添加失败！');
+    });
+}
+
+// 切换游戏状态：优化交互反馈
+function tog(id) {
+    if (!confirm('确认切换该游戏的状态吗？')) return;
+    
+    let fd = new FormData(); 
+    fd.append('game_id', id); 
+    fetch('/admin/toggle_game', {
+        method:'POST', 
+        body: fd
+    })
+    .then(r => {
+        if (r.ok) {
+            location.reload();
+        } else {
+            alert('状态切换失败，请重试！');
+        }
+    })
+    .catch(err => {
+        console.error('切换状态失败：', err);
+        alert('网络异常，切换失败！');
+    });
+}
+</script>
+</body>
+</html>
