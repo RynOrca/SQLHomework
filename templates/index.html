@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>GameKey Hub - 虚拟交易平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* 简单的鼠标悬停特效 */
+        .card:hover { transform: translateY(-5px); transition: 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="/">GameKey Hub</a>
+        <div class="d-flex text-white align-items-center">
+            <span class="me-3">当前用户: {{ session['username'] }}</span>
+            
+            <span class="badge bg-warning text-dark me-3">¥ {{ user.balance }}</span>
+            <a href="/sell" class="btn btn-success btn-sm me-2">上架cdkey</a>
+            <a href="/my_orders" class="btn btn-outline-light btn-sm">我的订单</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="alert alert-info shadow-sm mb-4">
+        <strong>欢迎光临：</strong> 相当简陋的游戏cdkey交易平台QwQ
+    </div>
+
+    <div class="row">
+        {% for game in games %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="card-title fw-bold mb-0">{{ game.title }}</h5>
+                        <span class="badge bg-secondary">{{ game.platform }}</span>
+                    </div>
+                    
+                    <div class="mt-3 mb-2">
+                        <h3 class="text-danger d-inline">¥ {{ game.current_price if game.current_price else '---' }}</h3>
+                        
+                        {% if game.stock > 0 %}
+                            <span class="badge bg-{{ game.color }} ms-2">{{ game.tag }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="text-muted small mt-1 mb-3">
+                        历史最低: ¥ {{ game.historical_low }} <br>
+                        剩余库存: {{ game.stock }}
+                    </p>
+
+                    {% if game.stock > 0 %}
+                        <button onclick="buy({{ game.game_id }})" class="btn btn-dark w-100">
+                            立即抢购
+                        </button>
+                    {% else %}
+                        <button disabled class="btn btn-light w-100 text-muted border">
+                            暂时缺货
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %} </div>
+</div>
+
+<script>
+function buy(gid) {
+    // 简单的确认框
+    if(!confirm('确认购买吗？将扣除余额并生成订单。')) return;
+    
+    // 发送购买请求给后端
+    fetch('/buy', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'game_id=' + gid
+    })
+    .then(r => r.json())
+    .then(data => {
+        // 后端返回结果处理
+        alert(data.msg);
+        if(data.status === 'success') {
+            // 购买成功，跳转到订单页
+            location.href = '/my_orders';
+        } else {
+            // 购买失败（如没钱、被人抢了），刷新页面更新最新状态
+            location.reload();
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("请求失败，请检查网络或控制台");
+    });
+}
+</script>
+
+</body>
+</html>
