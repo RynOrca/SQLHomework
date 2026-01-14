@@ -157,14 +157,14 @@ def buy_key():
         # 4. 检查买家与卖家是否相同
         if seller_id == buyer_id:
             conn.rollback();
-            return jsonify({'status': 'error', 'msg': '不能购买自己的商品?'})
+            return jsonify({'status': 'error', 'msg': '不能购买自己的商品'})
 
         cursor.execute("SELECT balance FROM Users WHERE user_id=%s", (buyer_id,))
 
         # 5. 检查余额
         if cursor.fetchone()['balance'] < price:
             conn.rollback();
-            return jsonify({'status': 'error', 'msg': '余额不足，请充值?'})
+            return jsonify({'status': 'error', 'msg': '余额不足，请充值'})
 
         # 6. 扣款 & 更新库存 & 生成订单
         cursor.execute("UPDATE Users SET balance = balance - %s WHERE user_id=%s", (price, buyer_id))  # 扣买家
