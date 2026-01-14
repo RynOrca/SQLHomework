@@ -137,11 +137,15 @@ def buy_key():
     conn = get_db()
     cursor = conn.cursor()
     try:
-        conn.begin()
+        # 1. 开启事务
+        conn.begin()        
+        # 2. 锁定库存 (SELECT ... FOR UPDATE)
+        # 使用悲观锁防止其他事务同时修改该商品，避免超卖
         sql_find = "SELECT key_id, price, seller_id FROM Product_Keys WHERE game_id=%s AND status='available' LIMIT 1 FOR UPDATE"
         cursor.execute(sql_find, (game_id,))
         item = cursor.fetchone()
 
+        # 3. 检查库存
         if not item:
             conn.rollback();
             return jsonify({'status': 'error', 'msg': '手慢了，已售罄！'})
@@ -150,15 +154,19 @@ def buy_key():
         seller_id = item['seller_id']
         key_id = item['key_id']
 
+        # 4. 检查买家与卖家是否相同
         if seller_id == buyer_id:
             conn.rollback();
-            return jsonify({'status': 'error', 'msg': '不能购买自己的商品'})
+            return jsonify({'status': 'error', 'msg': '不能购买自己的商品?'})
 
         cursor.execute("SELECT balance FROM Users WHERE user_id=%s", (buyer_id,))
+
+        # 5. 检查余额
         if cursor.fetchone()['balance'] < price:
             conn.rollback();
-            return jsonify({'status': 'error', 'msg': '余额不足，请充值'})
+            return jsonify({'status': 'error', 'msg': '余额不足，请充值?'})
 
+        # 6. 扣款 & 更新库存 & 生成订单
         cursor.execute("UPDATE Users SET balance = balance - %s WHERE user_id=%s", (price, buyer_id))  # 扣买家
         cursor.execute("UPDATE Users SET balance = balance + %s WHERE user_id=%s", (price, seller_id))  # 加卖家
 
@@ -167,6 +175,7 @@ def buy_key():
         cursor.execute("INSERT INTO Orders (buyer_id, key_id, deal_price) VALUES (%s, %s, %s)",
                        (buyer_id, key_id, price))
 
+        # 7. 提交事务
         conn.commit()
         return jsonify({'status': 'success', 'msg': '交易成功！资金已到账卖家'})
     except Exception as e:
@@ -226,6 +235,7 @@ def my_orders():
 
 
 @app.route('/admin')
+# Admin 管理后台
 def admin_dashboard():
     if session.get('role') != 'admin': return "Access Denied", 403
     conn = get_db()
@@ -252,6 +262,7 @@ def admin_dashboard():
 
 
 @app.route('/admin/add_game', methods=['POST'])
+# Admin 添加新游戏
 def add_game():
     if session.get('role') != 'admin': return jsonify({'status': 'error'})
     conn = get_db();
@@ -264,6 +275,7 @@ def add_game():
 
 
 @app.route('/admin/toggle_game', methods=['POST'])
+# Admin 启用/禁用游戏
 def toggle_game():
     if session.get('role') != 'admin': return jsonify({'status': 'error'})
     conn = get_db();
